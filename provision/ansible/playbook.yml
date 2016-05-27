@@ -1,0 +1,67 @@
+---
+- name: Web Development VM configuration play
+  hosts: all
+  remote_user: root
+  become: yes
+  tasks:
+  - name: Ensure Git PPA is added.
+    apt_repository: repo='ppa:git-core/ppa' state=present
+  - name: Ensure PHP 7 PPA is added.
+    apt_repository: repo='ppa:ondrej/php' state=present
+  - name: Ensure git and other packages are installed.
+    apt: name={{ item }} state=latest update_cache=yes cache_valid_time=604800
+    with_items:
+      - curl
+      - git
+      - build-essential
+      - php7.0-cli
+      - ruby
+  - name: Remove packages.
+    apt: name={{ item }} state=absent purge=yes
+    with_items:
+      - php5*
+  - name: Setup NodeJs.
+    shell: curl -sL https://deb.nodesource.com/setup_4.x >> nodejs_setup.sh &&
+             chmod +x nodejs_setup.sh && bash nodejs_setup.sh
+    args:
+      chdir: /srv
+      creates: nodejs_setup.sh
+  - name: Ensure node is installed.
+    apt: name=nodejs state=present
+  - name: Install global node.js packages with NPM.
+    npm: name={{ item }} state=present global=yes
+    with_items:
+      - gulp
+      - grunt-cli
+      - bower
+      - foundation-cli
+  - name: Set Time Zone
+    copy: content='America/Santo_Domingo'
+          dest=/etc/timezone
+          owner=root
+          group=root
+          mode=0644
+    notify:
+      - update timezone
+  - name: Install Composer.
+    shell: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    args:
+      creates: /usr/local/bin/composer
+  - name: Install ruby gems.
+    gem: name={{ item }} state=present user_install=no
+    with_items:
+      - sass
+  - name: Install Docker Compose.
+    get_url:
+      url: https://github.com/docker/compose/releases/download/1.7.0/docker-compose-linux-x86_64
+      dest: /usr/local/bin/docker-compose
+      mode: 0775
+  - name: Install command line completion for Docker Compose.
+    shell: curl -L https://raw.githubusercontent.com/docker/compose/$(docker-compose version --short)/contrib/completion/bash/docker-compose > /etc/bash_completion.d/docker-compose
+    args:
+      creates: /etc/bash_completion.d/docker-compose
+  - name: Ensure latest docker is installed.
+    apt: name=docker-engine state=latest
+  handlers:
+    - name: update timezone
+      command: dpkg-reconfigure --frontend noninteractive tzdata

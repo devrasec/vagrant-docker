@@ -1,0 +1,11 @@
+---
+ip: 192.168.10.20
+synced_folders:
+  # configuration for synced folders using NFS, one for each folder
+  - source_path: ~/Projects
+    target_path: /srv/projects
+    create: true
+    mount_options: []
+    user: 'vagrant'
+    group: 'www-data'
+    active: false
