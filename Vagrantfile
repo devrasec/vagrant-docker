@@ -62,9 +62,6 @@ Vagrant.configure(2) do |config|
       end
     end
 
-    # Docker provisioning. This install the latest version of Docker.
-    webdev.vm.provision "docker"
-
     # Provisioning with Ansible.
     webdev.vm.provision "ansible" do |ansible|
       ansible.playbook = "provision/ansible/playbook.yml"

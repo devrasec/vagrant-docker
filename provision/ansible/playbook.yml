@@ -16,6 +16,8 @@
       - build-essential
       - php7.0-cli
       - ruby
+      - apt-transport-https
+      - ca-certificates
   - name: Remove packages.
     apt: name={{ item }} state=absent purge=yes
     with_items:
@@ -51,17 +53,12 @@
     gem: name={{ item }} state=present user_install=no
     with_items:
       - sass
-  - name: Install Docker Compose.
-    get_url:
-      url: https://github.com/docker/compose/releases/download/1.7.0/docker-compose-linux-x86_64
-      dest: /usr/local/bin/docker-compose
-      mode: 0775
-  - name: Install command line completion for Docker Compose.
-    shell: curl -L https://raw.githubusercontent.com/docker/compose/$(docker-compose version --short)/contrib/completion/bash/docker-compose > /etc/bash_completion.d/docker-compose
+  - name: Add GPG key for Docker.
+    apt_key: keyserver=hkp://p80.pool.sks-keyservers.net:80 id=58118E89F3A912897C070ADBF76221572C52609D
+  - name: Add debian repo for Docker.
+    shell: echo "deb https://apt.dockerproject.org/repo ubuntu-trusty main" > /etc/apt/sources.list.d/docker.list
     args:
-      creates: /etc/bash_completion.d/docker-compose
-  - name: Ensure latest docker is installed.
-    apt: name=docker-engine state=latest
+      creates: /etc/apt/sources.list.d/docker.list
   handlers:
     - name: update timezone
       command: dpkg-reconfigure --frontend noninteractive tzdata
