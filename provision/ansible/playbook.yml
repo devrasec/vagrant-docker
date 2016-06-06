@@ -18,6 +18,8 @@
       - ruby
       - apt-transport-https
       - ca-certificates
+      - apparmor
+      - linux-image-extra-{{ ansible_kernel }}
   - name: Remove packages.
     apt: name={{ item }} state=absent purge=yes
     with_items:
