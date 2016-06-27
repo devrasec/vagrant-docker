@@ -70,6 +70,6 @@ Vagrant.configure(2) do |config|
     # Shell provisioning.
     # Bind the Docker daemon to a TCP port so that the client (running on the host)
     # can interact with it.
-    # webdev.vm.provision "shell", path: "provision/shell/docker_bind_port.sh"
+    webdev.vm.provision "shell", path: "provision/shell/docker_bind_port.sh"
   end
 end
