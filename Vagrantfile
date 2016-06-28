@@ -21,6 +21,9 @@ Vagrant.configure(2) do |config|
   # Disable checking for latest box
   config.vm.box_check_update = false
 
+  # Use the same key for each machine
+  config.ssh.insert_key = false
+
   # Virtualbox modifications
   config.vm.provider "virtualbox" do |v|
     v.memory = 2048
@@ -62,9 +65,6 @@ Vagrant.configure(2) do |config|
       end
     end
 
-    # Docker provisioning. This install the latest version of Docker.
-    webdev.vm.provision "docker"
-
     # Provisioning with Ansible.
     webdev.vm.provision "ansible" do |ansible|
       ansible.playbook = "provision/ansible/playbook.yml"
@@ -73,6 +73,6 @@ Vagrant.configure(2) do |config|
     # Shell provisioning.
     # Bind the Docker daemon to a TCP port so that the client (running on the host)
     # can interact with it.
-    # webdev.vm.provision "shell", path: "provision/shell/docker_bind_port.sh"
+    webdev.vm.provision "shell", path: "provision/shell/docker_bind_port.sh"
   end
 end
