@@ -69,6 +69,15 @@
     group: name=docker state=present
   - name: Add vagrant user to docker group.
     user: name=vagrant groups=docker append=yes
+  - name: Ensure Docker Compose is installed.
+    get_url:
+      url: https://github.com/docker/compose/releases/download/1.7.1/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}
+      dest: /usr/local/bin/docker-compose
+      mode: 0775
+  - name: Install command line completion for Docker Compose.
+    shell: curl -L https://raw.githubusercontent.com/docker/compose/$(docker-compose version --short)/contrib/completion/bash/docker-compose > /etc/bash_completion.d/docker-compose
+    args:
+      creates: /etc/bash_completion.d/docker-compose
   handlers:
     - name: update timezone
       command: dpkg-reconfigure --frontend noninteractive tzdata
