@@ -21,6 +21,9 @@ Vagrant.configure(2) do |config|
   # Disable checking for latest box
   config.vm.box_check_update = false
 
+  # Use the same key for each machine
+  config.ssh.insert_key = false
+
   # Virtualbox modifications
   config.vm.provider "virtualbox" do |v|
     v.memory = 2048
