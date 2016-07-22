@@ -3,3 +3,4 @@ test.rb
 config.yml
 *.retry
 TODO
+ansible.cfg
