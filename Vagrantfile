@@ -19,19 +19,19 @@ Vagrant.configure(2) do |config|
   # config.gatling.rsync_on_startup = false
 
   # Disable checking for latest box
-  config.vm.box_check_update = false
+  # config.vm.box_check_update = false
 
   # Use the same key for each machine
-  config.ssh.insert_key = false
+  # config.ssh.insert_key = false
 
   # Virtualbox modifications
   config.vm.provider "virtualbox" do |v|
     v.memory = 2048
-    v.cpus = 1
+    v.cpus = 2
   end
 
   config.vm.define "webdev-vm", primary: true do |webdev|
-    webdev.vm.box = "ubuntu/trusty64"
+    webdev.vm.box = "bento/ubuntu-16.04"
     webdev.vm.hostname = "docker-host"
 
     # Networking
@@ -41,10 +41,6 @@ Vagrant.configure(2) do |config|
     # Disable default /vagrant share
     webdev.vm.synced_folder ".", "/vagrant", disabled: true
 
-    # NFS global options
-    config.nfs.map_uid = Process.uid
-    config.nfs.map_gid = Process.gid
-
     vmconfig['synced_folders'].each do |path|
       if path['active'] then
         options = {
@@ -53,15 +49,7 @@ Vagrant.configure(2) do |config|
           nfs_udp: false,
           mount_options: ['defaults', 'tcp', 'actimeo=2'].concat(path['mount_options']),
         }
-        webdev.vm.synced_folder "#{path['source_path']}", "#{path['target_path']}-nfs", options
-
-        # Use `vagrant-bindfs` to correct permissions, a problem with NFS mounts
-        bind_options = {
-          force_user: path['user'] ||= 'vagrant',
-          force_group: path['group'] ||= 'vagrant',
-          create_with_perms: "u=rwX:g=rD:o=rD"
-        }
-        config.bindfs.bind_folder "#{path['target_path']}-nfs", "#{path['target_path']}", bind_options
+        webdev.vm.synced_folder "#{path['source_path']}", "#{path['target_path']}", options
       end
     end
 
@@ -73,6 +61,6 @@ Vagrant.configure(2) do |config|
     # Shell provisioning.
     # Bind the Docker daemon to a TCP port so that the client (running on the host)
     # can interact with it.
-    webdev.vm.provision "shell", path: "provision/shell/docker_bind_port.sh"
+    # webdev.vm.provision "shell", path: "provision/shell/docker_bind_port.sh"
   end
 end

@@ -6,39 +6,17 @@
   tasks:
   - name: Ensure Git PPA is added.
     apt_repository: repo='ppa:git-core/ppa' state=present
-  - name: Ensure PHP 7 PPA is added.
-    apt_repository: repo='ppa:ondrej/php' state=present
   - name: Ensure git and other packages are installed.
     apt: name={{ item }} state=latest update_cache=yes cache_valid_time=604800
     with_items:
       - curl
       - git
       - build-essential
-      - php7.0-cli
-      - ruby
       - apt-transport-https
       - ca-certificates
       - apparmor
       - linux-image-extra-{{ ansible_kernel }}
-  - name: Remove packages.
-    apt: name={{ item }} state=absent purge=yes
-    with_items:
-      - php5*
-  - name: Setup NodeJs.
-    shell: curl -sL https://deb.nodesource.com/setup_4.x >> nodejs_setup.sh &&
-             chmod +x nodejs_setup.sh && bash nodejs_setup.sh
-    args:
-      chdir: /srv
-      creates: nodejs_setup.sh
-  - name: Ensure node is installed.
-    apt: name=nodejs state=present
-  - name: Install global node.js packages with NPM.
-    npm: name={{ item }} state=present global=yes
-    with_items:
-      - gulp
-      - grunt-cli
-      - bower
-      - foundation-cli
+      - vim
   - name: Set Time Zone
     copy: content='America/Santo_Domingo'
           dest=/etc/timezone
@@ -47,18 +25,10 @@
           mode=0644
     notify:
       - update timezone
-  - name: Install Composer.
-    shell: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-    args:
-      creates: /usr/local/bin/composer
-  - name: Install ruby gems.
-    gem: name={{ item }} state=present user_install=no
-    with_items:
-      - sass
   - name: Add GPG key for Docker.
     apt_key: keyserver=hkp://p80.pool.sks-keyservers.net:80 id=58118E89F3A912897C070ADBF76221572C52609D
   - name: Add debian repo for Docker.
-    shell: echo "deb https://apt.dockerproject.org/repo ubuntu-trusty main" > /etc/apt/sources.list.d/docker.list
+    shell: echo "deb https://apt.dockerproject.org/repo ubuntu-xenial main" > /etc/apt/sources.list.d/docker.list
     args:
       creates: /etc/apt/sources.list.d/docker.list
   - name: Ensure Docker is installed.
@@ -71,7 +41,7 @@
     user: name=vagrant groups=docker append=yes
   - name: Ensure Docker Compose is installed.
     get_url:
-      url: https://github.com/docker/compose/releases/download/1.7.1/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}
+      url: https://github.com/docker/compose/releases/download/1.8.0/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}
       dest: /usr/local/bin/docker-compose
       mode: 0775
   - name: Install command line completion for Docker Compose.
