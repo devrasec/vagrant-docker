@@ -4,10 +4,8 @@
   remote_user: root
   become: yes
   tasks:
-  - name: Ensure Git PPA is added.
-    apt_repository: repo='ppa:git-core/ppa' state=present
-  - name: Ensure git and other packages are installed.
-    apt: name={{ item }} state=latest update_cache=yes cache_valid_time=604800
+  - name: Install necessary packages.
+    apt: name={{ item }} state=present
     with_items:
       - curl
       - git
@@ -17,37 +15,66 @@
       - apparmor
       - linux-image-extra-{{ ansible_kernel }}
       - vim
-  - name: Set Time Zone
+      - linux-image-extra-virtual
+      - software-properties-common
+
+  - name: Set Time Zone.
     copy: content='America/Santo_Domingo'
           dest=/etc/timezone
           owner=root
           group=root
           mode=0644
     notify:
-      - update timezone
-  - name: Add GPG key for Docker.
-    apt_key: keyserver=hkp://p80.pool.sks-keyservers.net:80 id=58118E89F3A912897C070ADBF76221572C52609D
-  - name: Add debian repo for Docker.
-    shell: echo "deb https://apt.dockerproject.org/repo ubuntu-xenial main" > /etc/apt/sources.list.d/docker.list
-    args:
-      creates: /etc/apt/sources.list.d/docker.list
-  - name: Ensure Docker is installed.
-    apt: name=docker-engine state=latest update_cache=yes
+      - Update timezone
+
+  - name: Add GPG key for Docker installation.
+    apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+
+  - name: Add Docker repository
+    apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
+      state: present
+      filename: 'docker'
+
+  - name: Install Docker engine
+    apt:
+      name: docker-ce
+      state: present
+
+  - name: Ensure Docker service is started
+    service: name=docker state=started
+
   - name: Ensure Docker service is started.
     service: name=docker state=started
+
   - name: Add docker group.
     group: name=docker state=present
+
   - name: Add vagrant user to docker group.
     user: name=vagrant groups=docker append=yes
-  - name: Ensure Docker Compose is installed.
-    get_url:
-      url: https://github.com/docker/compose/releases/download/1.8.0/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}
-      dest: /usr/local/bin/docker-compose
-      mode: 0775
-  - name: Install command line completion for Docker Compose.
-    shell: curl -L https://raw.githubusercontent.com/docker/compose/$(docker-compose version --short)/contrib/completion/bash/docker-compose > /etc/bash_completion.d/docker-compose
-    args:
-      creates: /etc/bash_completion.d/docker-compose
+
   handlers:
-    - name: update timezone
+    - name: Update timezone
       command: dpkg-reconfigure --frontend noninteractive tzdata
+
+    - name: Restart Docker daemon
+      service: name=docker state=restarted
+
+# This play install Docker Compose.
+- name: Docker Compose installation
+  hosts: all
+  remote_user: root
+  become: yes
+  tasks:
+    - name: Install Docker Compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/1.14.0/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}
+        dest: /usr/local/bin/docker-compose
+        mode: 0775
+
+    - name: Install command line completion for Docker Compose.
+      shell: curl -L https://raw.githubusercontent.com/docker/compose/$(docker-compose version --short)/contrib/completion/bash/docker-compose > /etc/bash_completion.d/docker-compose
+      args:
+        creates: /etc/bash_completion.d/docker-compose
